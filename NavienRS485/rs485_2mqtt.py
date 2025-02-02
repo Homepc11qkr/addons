@@ -30,7 +30,7 @@ class Wallpad:
             try:
                 print("MQTT 브로커 연결 시도 중...")
                 self.mqtt_client.connect(MQTT_SERVER, 1883)
-                self.mqtt_client.loop_start()  # 별도 스레드에서 실행
+                self.mqtt_client.loop_start()  # 백그라운드에서 실행
                 print("MQTT 연결 성공")
                 break
             except Exception as e:
@@ -67,7 +67,14 @@ class Wallpad:
         topics = [ROOT_TOPIC_NAME + '/dev/raw'] + self.get_topic_list_to_listen()
         self.mqtt_client.subscribe([(topic, 2) for topic in topics])
         print("MQTT 구독 시작")
-        self.mqtt_client.loop_forever()
+
+        try:
+            while True:
+                time.sleep(1)  # MQTT 루프가 백그라운드에서 실행 중이므로 별도 처리가 필요 없음
+        except KeyboardInterrupt:
+            print("프로그램 종료됨")
+            self.mqtt_client.loop_stop()
+            self.mqtt_client.disconnect()
 
     def on_raw_message(self, client, userdata, msg):
         """MQTT 메시지 수신 시 호출"""
@@ -159,4 +166,3 @@ light_regex = r'^(?P<cmd>[0-9a-f]{2})(?P<val>[0-9a-f]{2})'
 # 프로그램 시작
 # =============================
 wallpad.listen()
-# 2025_0202_2105_08
