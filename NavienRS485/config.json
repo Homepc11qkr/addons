@@ -1,8 +1,8 @@
 {
-  "name": "ew11_hyundai  Wallpad Controller with RS485(EW11)",
+  "name": "Navien Wallpad Controller with RS485(EW11)",
   "version": "1.0.0",
-  "slug": "ew11_hyundai _wallpad",
-  "description": "ew11_hyundai  Wallpad Controller for Homeassistant",
+  "slug": "navien_wallpad",
+  "description": "Navien Wallpad Controller for Homeassistant",
   "arch": [
     "armhf",
     "armv7",
@@ -10,7 +10,7 @@
     "amd64",
     "i386"
   ],
-  "url": "https://github.com/Homepc11qkr/addons",
+  "url": "https://github.com/JeongTaehun/addons",
   "startup": "application",
   "boot": "auto",
   "uart": true,
@@ -22,23 +22,23 @@
       "type": "Serial"
     },
     "Socket": {
-      "server": "192.168.0.36",
+      "server": "192.168.x.x",
       "port": 8899
     },
     "SocketDevice": {
-      "device": "ew11_hyundai "
+      "device": "kocom"
     },
     "Serial": {
       "port1": "/dev/ttyUSB0"
     },
     "SerialDevice": {
-      "port1": "ew11_hyundai "
+      "port1": "kocom"
     },
     "MQTT": {
       "anonymous": false,
       "server": "192.168.0.252",
-      "username": "mqtt_user",
-      "password": "mqtt_pass"
+      "username": "taehun.jeong",
+      "password": "Xognsdlahs1!"
     },
     "Wallpad": {
       "light": false,
@@ -55,38 +55,62 @@
       "DEFAULT_SPEED" : "medium",
       "LOGLEVEL" : "info"
     },
-    "ew11_hyundai _LIGHT_SIZE": [
+    "KOCOM_LIGHT_SIZE": [
       {
         "name": "livingroom",
-        "number": 1
-      },
-      {
-        "name": "livingroom2",
-        "number": 2
-      },
-      {
-        "name": "sofa",
-        "number": 2
-      },
-      {
-        "name": "front",
         "number": 3
       },
       {
+        "name": "bedroom",
+        "number": 2
+      },
+      {
+        "name": "room1",
+        "number": 2
+      },
+      {
+        "name": "room2",
+        "number": 2
+      },
+      {
         "name": "kitchen",
-        "number": 4
+        "number": 3
       }
     ],
-
-    "ew11_hyundai _ROOM": [
-      "livingroom"
-
+    "KOCOM_PLUG_SIZE": [
+      {
+        "name": "livingroom",
+        "number": 3
+      },
+      {
+        "name": "bedroom",
+        "number": 2
+      },
+      {
+        "name": "room1",
+        "number": 2
+      },
+      {
+        "name": "room2",
+        "number": 2
+      },
+      {
+        "name": "kitchen",
+        "number": 3
+      }
     ],
-    "ew11_hyundai _ROOM_THERMOSTAT": [
+    "KOCOM_ROOM": [
       "livingroom",
       "bedroom",
-      "bookroom",
-      "smallroom"
+      "room1",
+      "room2",
+      "kitchen"
+    ],
+    "KOCOM_ROOM_THERMOSTAT": [
+      "livingroom",
+      "bedroom",
+      "room1",
+      "room2"
     ]
   },
   "schema": {
@@ -131,16 +155,22 @@
       "DEFAULT_SPEED" : "str",
       "LOGLEVEL" : "str"
     },
-    "ew11_hyundai _LIGHT_SIZE": [
+    "KOCOM_LIGHT_SIZE": [
       {
         "name": "str?",
         "number": "int?"
       }
     ],
-    "ew11_hyundai _ROOM": [
+    "KOCOM_PLUG_SIZE": [
+      {
+        "name": "str?",
+        "number": "int?"
+      }
+    ],
+    "KOCOM_ROOM": [
       "str?"
     ],
-    "ew11_hyundai _ROOM_THERMOSTAT": [
+    "KOCOM_ROOM_THERMOSTAT": [
       "str?"
     ]
   }
