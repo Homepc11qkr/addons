@@ -16,9 +16,10 @@ class Wallpad:
     _device_list = []
 
     def __init__(self):
-        self.mqtt_client = mqtt.Client(protocol=mqtt.MQTTv311)
+        self.mqtt_client = mqtt.Client(protocol=mqtt.MQTTv311, callback_api_version=2)  # 최신 API 버전 사용
         self.mqtt_client.on_message = self.on_raw_message
         self.mqtt_client.on_disconnect = self.on_disconnect
+        self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
 
         self.connect_mqtt()
@@ -36,32 +37,41 @@ class Wallpad:
                 print(f"MQTT 연결 실패: {e}, 5초 후 재시도")
                 time.sleep(5)
 
+    def on_connect(self, client, userdata, flags, rc):
+        """연결 성공 시 호출"""
+        if rc == 0:
+            print("MQTT 브로커 연결 성공")
+            self.register_mqtt_discovery()  # 연결 성공 후 Home Assistant에 장치 등록
+        else:
+            print(f"MQTT 연결 실패, 코드: {rc}")
+
+    def on_disconnect(self, client, userdata, rc):
+        """연결이 끊어졌을 때 자동으로 재연결"""
+        print(f"MQTT 연결 해제됨. rc: {rc}")
+        self.connect_mqtt()  # 연결 재시도
+
+    def register_mqtt_discovery(self):
+        """Home Assistant에 MQTT 장치 자동 등록"""
+        for device in self._device_list:
+            if device.mqtt_discovery:
+                topic = '/'.join([HOMEASSISTANT_ROOT_TOPIC_NAME, device.device_class, device.device_unique_id, 'config'])
+                payload = device.get_mqtt_discovery_payload()
+                
+                if self.mqtt_client.is_connected():  # 연결 확인 후 publish 실행
+                    self.mqtt_client.publish(topic, payload, qos=2, retain=True)
+                else:
+                    print(f"MQTT 연결 끊김, {topic} 전송 실패")
+
     def listen(self):
-        self.register_mqtt_discovery()
+        """MQTT 메시지 수신을 위한 루프 실행"""
         topics = [ROOT_TOPIC_NAME + '/dev/raw'] + self.get_topic_list_to_listen()
         self.mqtt_client.subscribe([(topic, 2) for topic in topics])
         print("MQTT 구독 시작")
         self.mqtt_client.loop_forever()
 
-    def register_mqtt_discovery(self):
-        for device in self._device_list:
-            if device.mqtt_discovery:
-                topic = '/'.join([HOMEASSISTANT_ROOT_TOPIC_NAME, device.device_class, device.device_unique_id, 'config'])
-                payload = device.get_mqtt_discovery_payload()
-                self.mqtt_client.publish(topic, payload, qos=2, retain=True)
-
-    def on_disconnect(self, client, userdata, rc):
-        """연결이 끊어졌을 때 자동으로 재연결"""
-        print(f"MQTT 연결 해제됨. rc: {rc}")
-        self.connect_mqtt()
-
     def on_raw_message(self, client, userdata, msg):
+        """MQTT 메시지 수신 시 호출"""
         print(f"수신된 메시지: {msg.topic} - {msg.payload}")
-
-        if msg.topic == ROOT_TOPIC_NAME + '/dev/raw':
-            print("RS485 RAW 데이터 처리 중...")
-        else:
-            print("명령 메시지 처리 중...")
 
     def add_device(self, device_name, device_id, device_subid, device_class, child_device=[], mqtt_discovery=True, optional_info={}):
         device = Device(device_name, device_id, device_subid, device_class, child_device, mqtt_discovery, optional_info)
@@ -135,33 +145,18 @@ wallpad = Wallpad()
 
 # 조명
 optional_info_light = {'optimistic': 'false'}
-
 거실1전등 = wallpad.add_device(device_name='거실1전등', device_id='19', device_subid='11', device_class='light', optional_info=optional_info_light)
-거실2전등 = wallpad.add_device(device_name='거실2전등', device_id='19', device_subid='12', device_class='light', optional_info=optional_info_light)
 
 # 조명 상태 등록
 light_regex = r'^(?P<cmd>[0-9a-f]{2})(?P<val>[0-9a-f]{2})'
-for dev in [거실1전등, 거실2전등]:
-    dev.register_status(message_flag='04', attr_name='power', topic_class='state_topic',
-                        regex=light_regex,
-                        process_func=lambda gd: 'ON' if gd['cmd'] == '01' and gd['val'] == '01' else 'OFF')
-    dev.register_command(message_flag='02', attr_name='power', topic_class='command_topic',
-                         process_func=lambda v: '01' if v.upper() == 'ON' else '02')
-
-# 보일러
-optional_info_boiler = {'modes': ['off', 'on']}
-
-거실보일러 = wallpad.add_device(device_name='거실보일러', device_id='18', device_subid='11', device_class='climate', optional_info=optional_info_boiler)
-
-boiler_regex = r'^(?P<cmd>[0-9a-f]{2})(?P<val>[0-9a-f]{2})'
-거실보일러.register_status(message_flag='04', attr_name='power', topic_class='state_topic',
-                          regex=boiler_regex,
+거실1전등.register_status(message_flag='04', attr_name='power', topic_class='state_topic',
+                          regex=light_regex,
                           process_func=lambda gd: 'ON' if gd['cmd'] == '01' and gd['val'] == '01' else 'OFF')
-거실보일러.register_command(message_flag='02', attr_name='power', topic_class='command_topic',
-                           process_func=lambda v: '01' if v.lower() == 'on' else '04')
+거실1전등.register_command(message_flag='02', attr_name='power', topic_class='command_topic',
+                          process_func=lambda v: '01' if v.upper() == 'ON' else '02')
 
 # =============================
 # 프로그램 시작
 # =============================
 wallpad.listen()
-# 2025_0202_2100_09
+# 2025_0202_2105_08
