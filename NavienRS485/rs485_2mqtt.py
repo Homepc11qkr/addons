@@ -276,5 +276,5 @@ for message_flag in ['81', 'c3', 'c4', 'c5']:
 # 엘리베이터.register_status(message_flag = '01', attr_name = 'availability', topic_class ='availability_topic', regex = r'(0[01])', process_func = lambda v: 'online')
 # 엘리베이터.register_command(message_flag = '43', attr_name = 'power', topic_class = 'command_topic', process_func = lambda v: '10' if v == 'ON' else '10') # 엘리베이터 호출 # F7 33 01 43 01 10 97 16
 
-wallpad.listen()
+#wallpad.listen()
 # https://github.com/Homepc11qkr/addons
