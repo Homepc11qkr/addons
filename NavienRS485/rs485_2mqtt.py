@@ -1,8 +1,8 @@
 import paho.mqtt.client as mqtt
 import time
 
-MQTT_USERNAME = 'SHOULD_BE_CHANGED'
-MQTT_PASSWORD = 'SHOULD_BE_CHANGED'
+MQTT_USERNAME = 'mqtt_user'
+MQTT_PASSWORD = 'mqtt_pass'
 MQTT_SERVER = '192.168.0.35'
 ROOT_TOPIC_NAME = 'rs485_2mqtt'
 
