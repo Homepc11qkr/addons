@@ -3,6 +3,7 @@ import re
 from json import dumps as json_dumps
 from functools import reduce
 from collections import defaultdict
+import time
 
 MQTT_USERNAME = 'SHOULD_BE_CHANGED'
 MQTT_PASSWORD = 'SHOULD_BE_CHANGED'
@@ -107,7 +108,8 @@ class Wallpad:
     _device_list = []
 
     def __init__(self):
-        self.mqtt_client = mqtt.Client()
+        # 최신 API 사용을 위해 protocol을 명시합니다.
+        self.mqtt_client = mqtt.Client(protocol=mqtt.MQTTv311)
         self.mqtt_client.on_message = self.on_raw_message
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
@@ -190,12 +192,21 @@ class Wallpad:
             client.publish(ROOT_TOPIC_NAME + '/dev/command', payload, qos=2, retain=False)
 
     def on_disconnect(self, client, userdata, rc):
-        raise ConnectionError
+        # 연결 해제 시 예외를 발생시키지 않고 로그를 출력하며 재연결 시도
+        print("MQTT 연결이 해제되었습니다. rc:", rc)
+        # 재연결을 시도합니다.
+        while True:
+            try:
+                client.reconnect()
+                print("재연결 성공")
+                break
+            except Exception as e:
+                print("재연결 실패:", e)
+                time.sleep(5)
 
 # ============================================================
 # 아래는 각 장치(조명, 보일러) 등록 및 설정 예제
 # ============================================================
-
 wallpad = Wallpad()
 
 # ----- 조명 (device_id '19') -----
@@ -238,5 +249,17 @@ for dev in [거실보일러, 안방보일러, 작은방보일러, 서재보일�
     dev.register_command(message_flag='02', attr_name='power', topic_class='command_topic',
                          process_func=lambda v: '01' if v.lower()=='on' else '04')
 
+# --------------------------------------------------
+# 참고: 보일러 관련 추가 채널(예, 7, 8번)의 예제도 유사하게 등록 가능함.
+# 예)
+#  거실보일러 7 요청: F7 0B 01 18 02 45 11 07 00 B4 EE
+#  거실보일러 7 응답: F7 0D 01 18 04 45 11 07 01 14 07 A6 EE
+#  거실보일러 8 요청: F7 0B 01 18 02 45 11 08 00 BB EE
+#  거실보일러 8 응답: F7 0D 01 18 04 45 11 08 01 14 08 A6 EE
+# --------------------------------------------------
+
+# ============================================================
+# 프로그램 시작
+# ============================================================
 wallpad.listen()
-# 2025_0202_2033_55
+# 2025_0202
